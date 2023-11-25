@@ -1,5 +1,12 @@
 #!/bin/bash
+# Access a set of links using dmenu.
+# The links are defined in $HOME/.frequent by default
+#
+# They can have comments on the lines; 
+# the only thing checked in the dmenu script is 
+# the first complete word
 
 SOURCE="$HOME/.frequent"
+touch $SOURCE
 
 xdotool type $(cat $SOURCE | dmenu -l 50 | cut -d ' ' -f1)
