@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo cryptsetup luksOpen /dev/sda1 drive
+
+sudo mount /dev/mapper/drive /media/hd
