@@ -1,5 +1,5 @@
 #!/bin/bash
 
-SOURCE="/home/tyler/.frequent"
+SOURCE="$HOME/.frequent"
 
 xdotool type $(cat $SOURCE | dmenu -l 50 | cut -d ' ' -f1)
