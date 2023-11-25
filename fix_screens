@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo "Setting monitors for triple monitor setup..."
+
+#turn on the screens
+#xrandr --output DisplayPort-1 --auto
+#xrandr --output HDMI-0 --auto
+#xrandr --output DP-0.2 --auto
+#xrandr --output DP-3 --primary
+
+#arrange them in the 3 monitor config
+#xrandr --output DisplayPort-1 --mode 1920x1080 --rate 164.6
+#xrandr --output HDMI-A-0 --left-of DisplayPort-0 --rate 165 --mode 1920x1080
+#xrandr --output DisplayPort-0 --right-of DisplayPort-1 --rate 165 --mode 1920x1080
+
+xrandr --output DisplayPort-0 --mode 1920x1080 --rate 164.6
+xrandr --output HDMI-A-0 --left-of DisplayPort-0 --rate 165 --mode 1920x1080
+xrandr --output DisplayPort-1 --right-of DisplayPort-0 --rate 165 --mode 1920x1080
+xrandr --output DisplayPort-2 --rate 165 --mode 1920x1080
+
+notify-send "Screens" "Screens reconfigured for triple monitor setup"
