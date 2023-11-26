@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Use a scanner to obtain a pdf of a given file or files, then upload them.
+
+
+SCAN_DIR="/tmp/scanner"
+#SECRETS="~/.script-secrets.json"
+SECRETS="./secrets.json"
+mkdir -p $SCAN_DIR
+
+declare -a SCANNED_IMAGES
+
+scan_image() {
+    local FILE_NAME="${SCAN_DIR}/scan_$(date +%s).pdf"
+
+    sudo scanimage --format=pdf -o $FILE_NAME
+    sudo chown $USER:$USER $FILE_NAME
+    echo $FILE_NAME
+}
+
+ask_continue() {
+    read -p "Is there another page? (Y/n) " choice
+    [[ "${choice}" == "" || "${choice,,}" == "y" || ${choice,,} == "yes" ]]
+}
+
+ask_delete_temp_files() {
+    read -p "Should we clean up our temporary files? (Y/n) " choice
+    [[ "${choice}" == "" || "${choice,,}" == "y" || ${choice,,} == "yes" ]]
+}
+
+while true; do
+    img=$(scan_image)
+    SCANNED_IMAGES+=($img)
+
+    if ! ask_continue; then
+        break
+    fi
+done
+
+echo $SCANNED_IMAGES
+
+OUTPUT_PDF=output.pdf
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="$OUTPUT_PDF" "${SCANNED_IMAGES[@]}"
+
+PAPERLESS_ENABLED=$(jq -r '.paperless.enabled' $SECRETS)
+echo "$PAPERLESS_ENABLED"
+
+if [[ "${PAPERLESS_ENABLED,,}" == "true" ]]; then
+    PAPERLESS_URL=$(jq -r ".paperless.url"      $SECRETS)
+    PAPERLESS_USERNAME=$(jq -r ".paperless.username" $SECRETS)
+    PAPERLESS_PASSWORD=$(jq -r ".paperless.password" $SECRETS)
+    PAPERLESS_TAGS=$(jq -r ".paperless.tags" $SECRETS)
+
+
+    AUTH_TOKEN=$(curl -s -X POST "${PAPERLESS_URL}/api/token/" -H "Content-Type: application/json" -d "{\"username\": \"${PAPERLESS_USERNAME}\", \"password\": \"${PAPERLESS_PASSWORD}\"}")
+    AUTH_TOKEN=$(echo $AUTH_TOKEN | jq -r ".token")
+
+    UPLOAD_RESPONSE=$(curl -s -X POST "${PAPERLESS_URL}/api/documents/post_document/" -H "Authorization: Token ${AUTH_TOKEN}" -F "document=@${OUTPUT_PDF}" -F "tags=${PAPERLESS_TAGS}")
+
+    echo "Reply: ${UPLOAD_RESPONSE}"
+fi
+
+
+
+if ask_delete_temp_files; then
+    rm -rf $SCAN_DIR
+    echo "Temporary files cleaned up"
+else
+    echo "Temporary files kept in $FILE_DIR"
+fi
+
+echo "Document saved as $OUTPUT_PDF"
